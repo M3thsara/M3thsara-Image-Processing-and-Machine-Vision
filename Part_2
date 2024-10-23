@@ -1,0 +1,36 @@
+import numpy as np
+from scipy . optimize import minimize
+from scipy import linalg
+import matplotlib . pyplot as plt
+import tikzplotlib
+
+# np . random . seed ( 0 )
+N = 100
+half_n = N// 2
+
+r = 10
+x0_gt , y0_gt = 2 , 3 # Center
+s = r /16
+t = np . random . uniform (0 , 2*np . pi , half_n )
+n = s*np . random . randn ( half_n )
+x , y = x0_gt + ( r + n)*np . cos ( t ) , y0_gt + ( r + n)*np . sin ( t )
+X_circ = np . hstack ( ( x . reshape ( half_n , 1 ) , y . reshape ( half_n , 1 ) ) )
+
+s = 1.
+m, b = -1, 2
+x = np . linspace (-12, 12 , half_n )
+y = m*x + b + s*np . random . randn ( half_n )
+X_line = np . hstack ( ( x . reshape ( half_n , 1 ) , y . reshape ( half_n , 1 ) ) )
+X = np . vstack ( ( X_circ , X_line ) ) # A l l p o in t s
+fig , ax = plt . subplots (1 ,1 , figsize =(8 ,8))
+ax . scatter ( X_line [ : , 0 ] , X_line [ : , 1 ] , label= ' Line ' )
+ax . scatter ( X_circ [ : , 0 ] , X_circ [ : , 1 ] , label= ' Circle ' )
+circle_gt = plt.Circle ( ( x0_gt , y0_gt ) , r , color= 'g' , fill =False , label= ' Ground truth circle' )
+ax . add_patch ( circle_gt )
+ax . plot ( ( x0_gt ) , ( y0_gt ) , '+' , color= 'g' )
+x_min , x_max = ax . get_xlim ( )
+x_ = np . array ( [ x_min , x_max ] )
+y_ = m*x_ + b
+plt . plot ( x_ , y_ , color= 'm' , label= ' Ground truth line ' )
+plt . legend ( )
+
