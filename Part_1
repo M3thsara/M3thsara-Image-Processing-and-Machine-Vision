@@ -1,0 +1,64 @@
+import cv2 as cv     #open opencv
+import numpy as np
+import matplotlib.pyplot as plt
+from skimage.feature import blob_log
+
+image = cv.imread('/content/drive/MyDrive/Images - EN3160 IPMV/a2images/the_berry_farms_sunflower_field.jpeg',cv.IMREAD_REDUCED_COLOR_4)
+assert image is not None
+
+fig, ax = plt.subplots(figsize=(10, 10))
+plt.title('Original Image')
+plt.imshow(cv.cvtColor(image, cv.COLOR_BGR2RGB))
+plt.axis('off')
+plt.show()
+
+# Function to create the Laplacian of Gaussian kernel
+
+def generate_log_kernel(kernel_size, std_dev):
+    axis = np.linspace(-(kernel_size // 2), kernel_size // 2, kernel_size)
+    x_vals, y_vals = np.meshgrid(axis, axis)
+    
+    # Calculate the Laplacian of Gaussian
+    log_filter = (x_vals**2 + y_vals**2 - 2 * std_dev**2) * np.exp(-(x_vals**2 + y_vals**2) / (2 * std_dev**2))
+    return log_filter
+
+# Define range of sigma values
+sigma_values = np.linspace(7, 11, 40)
+filtered_images_with_circles = []
+
+# Loop through each sigma value and apply the filter
+for sigma in sigma_values:
+    # Apply the filter to the grayscale image
+    log_filtered = cv.filter2D(cv.cvtColor(image, cv.COLOR_BGR2GRAY), -1, generate_log_kernel(35, sigma) * sigma**2)
+    
+    # Normalize the filtered image for better visualization
+    norm_image = cv.normalize(log_filtered, None, 0, 255, cv.NORM_MINMAX)
+    
+    # Convert to binary using thresholding
+    _, binary_thresh = cv.threshold(np.uint8(norm_image), 200, 255, cv.THRESH_BINARY)
+    
+    # Find where the binary image is greater than 0
+    y_coords, x_coords = np.where(binary_thresh > 0)
+    img_copy = image.copy()
+    
+    # Draw circles at the detected coordinates
+    for x, y in zip(x_coords, y_coords):
+        cv.circle(img_copy, (x, y), round(sigma * np.sqrt(2)), (255, 255, 255), 1)  # Draw white circles
+
+    filtered_images_with_circles.append(img_copy)
+
+# Set up the subplot layout for displaying the results
+columns = 4
+total_images = len(filtered_images_with_circles)
+rows = (total_images + columns - 1) // columns
+
+# Plot all filtered images with circles
+plt.figure(figsize=(15, 5 * rows))  # Adjust figure size based on the number of rows
+for idx, result_image in enumerate(filtered_images_with_circles):
+    plt.subplot(rows, columns, idx + 1)
+    plt.imshow(cv.cvtColor(result_image, cv.COLOR_BGR2RGB))
+    plt.title(f'Sigma: {sigma_values[idx]:.1f}')
+    plt.axis('off')
+
+plt.tight_layout()
+plt.show()
